@@ -24,8 +24,8 @@ public class CustomerThreadPoolExecutor {
     public void init() throws Exception {
         logger.info("初始化线程池");
         pool =  new ThreadPoolExecutor(
-                3,
-                3,
+                10,
+                12,
                 3000,
                 TimeUnit.SECONDS,
                 new ArrayBlockingQueue<Runnable>(10),
@@ -48,7 +48,7 @@ public class CustomerThreadPoolExecutor {
             AtomicInteger count = new AtomicInteger(0);
             logger.info("创建了一个线程。。。。");
             Thread t = new Thread(r);
-            t.setName("线程--"+count);
+//            t.setName("线程--"+count.addAndGet(1));
             return t;
         }
     }
@@ -56,8 +56,15 @@ public class CustomerThreadPoolExecutor {
 
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+            try {
+                // 核心改造点，由blockingqueue的offer改成put阻塞方法   进入拒绝机制保证
+                logger.info("拒绝机制。。。。。。。。重新将线程重新放入队列。防止线程OOM。");
+                executor.getQueue().put(r);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             //todo 业务逻辑？
-            logger.info("开始记录日志。。。。。。。。。");
+
         }
     }
 }
